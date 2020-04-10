@@ -38,12 +38,25 @@ joined %>%
   filter(is.na(term_case_count_apr10))
 
 #the local jurisdictions hand-gathered by staff need to be incorporated
+
 #first we'll take out the cherokee nation since no cases available in the current dataset
 joined <- joined %>% 
   filter(name != "cherokee nation of oklahoma")
 
 #then we'll create a new column to merge term number for states, hand-gathered for local
-
+#the new column will be the one we use from here on out
+joined <- joined %>% 
+  mutate(
+    casecount = if_else(state_or_local == "state", term_case_count_apr10, cases_cdc_apr9)
+  ) %>% 
+  select(
+    name,
+    state_or_local,
+    casecount,
+    everything(),
+    -cases_cdc_apr9,
+    -term_case_count_apr10
+  ) 
 
 
 
