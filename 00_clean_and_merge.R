@@ -12,6 +12,24 @@ ppe <- ppe %>%
 
 names(ppe)
 
+#we'll remove the previously calculated fields, since we'll be calculating again with new counts
+ppe <- ppe %>% 
+  select(
+    name,
+    state_or_local,
+    censuspop2010,
+    cases_cdc_apr9,
+    n95_respirators,
+    surgical_masks,
+    face_shield,
+    surgical_gowns,
+    coveralls,
+    gloves,
+    papr,
+    ventilator
+  )
+
+
 
 #import terminal case counts and pare down columns
 terminal_casecounts_apr10 <- read_excel("data/terminal_casecounts_apr10.xlsx", 
@@ -48,18 +66,31 @@ joined <- joined %>%
 joined <- joined %>% 
   mutate(
     casecount = if_else(state_or_local == "state", term_case_count_apr10, cases_cdc_apr9)
-  ) %>% 
+  ) 
+
+#now we'll use the new case count column to calculate per capita based on population
+joined <- joined %>% 
+  mutate(
+    cases_per_100k = round_half_up(casecount / censuspop2010 * 100000)
+  ) 
+
+#finally, reorder the columns and take out ones we no longer need
+joined <- joined %>% 
   select(
     name,
     state_or_local,
     casecount,
+    censuspop2010,
+    cases_per_100k,
     everything(),
     -cases_cdc_apr9,
     -term_case_count_apr10
   ) 
 
+head(joined)
 
-
-
+#save results for next step
+saveRDS(joined, "data/joined.rds")
+write_xlsx(joined, "data/joined.xlsx")
 
 
