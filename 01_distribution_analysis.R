@@ -52,22 +52,22 @@ ppedata_final <- ppedata %>%
     censuspop2010,
     cases_per_100k,
     n95_respirators_DELIVERED = n95_respirators,
-    n95_percapita,
     n95_percapita_rank,
-    n95_bytotalcases,
     n95_bytotalcases_rank,
-    n95_bycases100k,
     n95_bycases100k_rank,
+    n95_percapita,
+    n95_bycases100k,   
+    n95_bytotalcases,
     ventilators_DELIVERED = ventilator,
-    vent_percapita,
     vent_percapita_rank,
-    vent_bytotalcases,
     vent_bytotalcases_rank,
+    vent_bycases100K_rank,
+    vent_percapita,
+    vent_bytotalcases,
     vent_bycases100K,
-    vent_bycases100K_rank
   )
 
-ppedata_final  
+names(ppedata_final)
 
 #export for sharing
 write_xlsx(ppedata_final, "output/ppedata_export.xlsx")
