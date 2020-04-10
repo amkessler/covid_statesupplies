@@ -3,6 +3,14 @@ library(janitor)
 library(readxl)
 library(writexl)
 
+# In this script, we'll load and clean up two separate datasets, one and then the other
+# The first is personal protective equipment (ppe) allocations sent to the states
+# The second is grant data on HHS grants made to state and local governments/organizations
+
+
+## 1) PPE DATA #############################
+
+
 #import ppe data
 ppe <- read_excel("data/SNS_PPE_REPORT.xlsx")
 
@@ -90,7 +98,19 @@ joined <- joined %>%
 head(joined)
 
 #save results for next step
-saveRDS(joined, "data/joined.rds")
+saveRDS(joined, "data/joined_ppe.rds")
+
+
+
+
+#############################################################################
+
+# 2) HHS COVID-19 AWARD GRANT DATA
+# source here: https://taggs.hhs.gov/coronavirus
+
+
+#import the latest version of the data after downloaded as csv
+taggs_latest <- read_csv("data/taggs_export_latest.csv", col_types = cols(.default = "c"))
 
 
 
