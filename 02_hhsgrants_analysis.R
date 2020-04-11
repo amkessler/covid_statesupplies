@@ -160,7 +160,7 @@ joined_taggs_bystate <- joined_taggs_bystate %>%
 joined_taggs_bystate <- joined_taggs_bystate %>% 
   mutate(
     #by population per capita
-    dollars_percapita = total_dollars / censuspop2010,
+    dollars_percapita = total_dollars / censuspop2018,
     dollars_percapita_rank = min_rank(desc(dollars_percapita)),
     dollars_percase = total_dollars / casecount,
     dollars_percase_rank = min_rank(desc(dollars_percase)),
