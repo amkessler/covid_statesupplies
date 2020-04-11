@@ -145,24 +145,12 @@ term_cases <- readRDS("data/term_cases.rds")
 #join it to the main table
 joined_taggs_bystate <- inner_join(joined_taggs_bystate, term_cases, by = c("state_name" = "name"))
 
-
-
-#now we'll use the new case count column to calculate per capita based on population
-joined_ppe <- joined_ppe %>% 
+#now we'll calculate cases per 100k based on population
+joined_taggs_bystate <- joined_taggs_bystate %>% 
+  rename(casecount = term_case_counts) %>% 
   mutate(
-    cases_per_100k = round_half_up(casecount / censuspop2010 * 100000)
+    cases_per_100k = round_half_up(casecount / censuspop2018 * 100000)
   ) 
-
-
-
-#let's use the ppe table to piggyback off of already state virus case counts and populations
-tempdf <- joined_ppe %>% 
-  select(
-    name, state_or_local, casecount, censuspop2010, cases_per_100k
-  )
-
-
-#join to 
 
 
 
