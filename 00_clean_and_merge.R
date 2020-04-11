@@ -1,5 +1,6 @@
 library(tidyverse)
 library(janitor)
+library(lubridate)
 library(readxl)
 library(writexl)
 
@@ -110,8 +111,17 @@ saveRDS(joined, "data/joined_ppe.rds")
 
 
 #import the latest version of the data after downloaded as csv
-taggs_latest <- read_csv("data/taggs_export_latest.csv", col_types = cols(.default = "c"))
+taggs_latest_raw <- read_csv("data/taggs_export_latest.csv", col_types = cols(.default = "c"))
+
+#clean names and format columns
+taggs_latest <- taggs_latest_raw %>% 
+  clean_names() %>% 
+  mutate(
+    # award_amount = parse_number(award_amount),
+    action_date = mdy(action_date)
+  ) 
 
 
-
+taggs_latest %>% 
+  filter(recipient_name == "Human Services, Vermont Agency Of")
 
