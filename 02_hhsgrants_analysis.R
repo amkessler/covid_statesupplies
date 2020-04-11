@@ -91,6 +91,8 @@ taggs_filtered %>%
 
 # **may be additional categories of grants that also need to be removed... tbd
 
+# **also does DC itself need to be removed? Are there grants tagged as DC that have nothing to do with funding *for* DC residents?
+
 
 
 ### AGGREGATING BY STATE ####
@@ -122,6 +124,30 @@ tempdf
 
 #ok now we're ready to join the temporary table back to our HHS grant data
 joined_taggs_bystate <- inner_join(tempdf, taggs_bystate, by = "state")
+
+
+
+### CALCULATING THE RATIOS ####
+
+#add calculated fields and ranks
+joined_taggs_bystate <- joined_taggs_bystate %>% 
+  mutate(
+    #by population per capita
+    dollars_percapita = total_dollars / censuspop2010,
+    dollars_percapita_rank = min_rank(desc(dollars_percapita)),
+    dollars_percase = total_dollars / casecount,
+    dollars_percase_rank = min_rank(desc(dollars_percase)),
+    dollars_per_casesper100kppl = total_dollars / cases_per_100k,
+    dollars_per_casesper100kppl_rank = min_rank(desc(dollars_per_casesper100kppl))
+  ) 
+
+#add a ranking too for the cases/per100k itself 
+joined_taggs_bystate <- joined_taggs_bystate %>% 
+  mutate(
+    cases_per_100k_rank = min_rank(desc(cases_per_100k))
+  )
+
+names(joined_taggs_bystate)
 
 
 
