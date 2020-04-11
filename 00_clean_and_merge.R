@@ -49,6 +49,8 @@ term_cases <- terminal_casecounts_apr10 %>%
     term_case_count_apr10 = latest
   )
 
+#save as RDS for later use
+saveRDS(term_cases, "data/term_cases.rds")
 
 ##join 
 joined_ppe <- left_join(ppe, term_cases)
