@@ -65,12 +65,11 @@ taggs_latest %>%
 taggs_latest %>% 
   group_by(state) %>% 
   summarise(n = n(), total_dollars = sum(award_amount)) %>% 
-  arrange(desc(total_dollars)) %>% 
-  View()
+  arrange(desc(total_dollars)) 
 
 
 
-### FILTERING ####
+### FILTERING #### 
 
 #first we'll limit to just US states and DC, no territories
 head(fips_codes) #built into tidycensus
@@ -79,9 +78,11 @@ us <- unique(fips_codes$state)[1:51]
 taggs_filtered <- taggs_latest %>% 
   filter(state %in% us)
 
+taggs_filtered %>% 
+  count(state)
 
 #per guidance from BB health team expert, we'll filter out all NIH grants
-taggs_filtered <- taggs_latest %>% 
+taggs_filtered <- taggs_filtered %>% 
   filter(opdiv != "NIH")
 
 #confirm it's gone
@@ -95,13 +96,12 @@ taggs_filtered %>%
 ### AGGREGATING BY STATE ####
 
 #now let's aggregate spending by state to work with
-taggs_filtered %>% 
+taggs_bystate <- taggs_filtered %>% 
   group_by(state) %>% 
   summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
-  arrange(desc(total_dollars))
+  arrange(desc(total_dollars)) 
 
-
-
+taggs_bystate
 
 #let's use the ppe table to piggyback off of already good-to-go state case counts and populations
 tempdf <- joined_ppe %>% 
@@ -110,7 +110,7 @@ tempdf <- joined_ppe %>%
   )
 
 #since the HHS data has only state abbreviations, not full names, we'll need to add that
-#we'll use tidycensus' built in tables to pull together
+#we'll use tidycensus' built in fips table once again 
 statelist <- tidycensus::fips_codes %>% 
   select(state, state_name) %>% 
   distinct() %>% 
@@ -121,7 +121,7 @@ tempdf <- left_join(tempdf, statelist, by = c("name" = "state_name"))
 tempdf
 
 #ok now we're ready to join the temporary table back to our HHS grant data
-
+joined_taggs_bystate <- inner_join(tempdf, taggs_bystate, by = "state")
 
 
 
