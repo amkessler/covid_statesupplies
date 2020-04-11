@@ -1,6 +1,7 @@
 library(tidyverse)
 library(janitor)
 library(lubridate)
+library(tidycensus)
 library(readxl)
 library(writexl)
 
@@ -58,33 +59,33 @@ term_cases <- terminal_casecounts_apr10 %>%
 
 
 ##join 
-joined <- left_join(ppe, term_cases)
+joined_ppe <- left_join(ppe, term_cases)
 
 #see what didn't join
-joined %>% 
+joined_ppe %>% 
   filter(is.na(term_case_count_apr10))
 
 #the local jurisdictions hand-gathered by staff need to be incorporated
 
 #first we'll take out the cherokee nation since no cases available in the current dataset
-joined <- joined %>% 
+joined_ppe <- joined_ppe %>% 
   filter(name != "cherokee nation of oklahoma")
 
 #then we'll create a new column to merge term number for states, hand-gathered for local
 #the new column will be the one we use from here on out
-joined <- joined %>% 
+joined_ppe <- joined_ppe %>% 
   mutate(
     casecount = if_else(state_or_local == "state", term_case_count_apr10, cases_cdc_apr9)
   ) 
 
 #now we'll use the new case count column to calculate per capita based on population
-joined <- joined %>% 
+joined_ppe <- joined_ppe %>% 
   mutate(
     cases_per_100k = round_half_up(casecount / censuspop2010 * 100000)
   ) 
 
 #finally, reorder the columns and take out ones we no longer need
-joined <- joined %>% 
+joined_ppe <- joined_ppe %>% 
   select(
     name,
     state_or_local,
@@ -96,10 +97,10 @@ joined <- joined %>%
     -term_case_count_apr10
   ) 
 
-head(joined)
+head(joined_ppe)
 
 #save results for next step
-saveRDS(joined, "data/joined_ppe.rds")
+saveRDS(joined_ppe, "data/joined_ppe.rds")
 
 
 
@@ -114,7 +115,7 @@ saveRDS(joined, "data/joined_ppe.rds")
 taggs_latest_raw <- read_csv("data/taggs_export_latest.csv", col_types = cols(.default = "c"))
 
 #clean names and format columns
-#note: parse_number doesn't handle negative currency well, so because there's at least 
+# **note: parse_number doesn't handle negative currency well, so because there's at least 
 # one negative dollar amount in the data we'll strip out the dollar sign ($) first
 taggs_latest <- taggs_latest_raw %>% 
   clean_names() %>% 
