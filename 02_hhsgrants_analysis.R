@@ -150,4 +150,7 @@ joined_taggs_bystate <- joined_taggs_bystate %>%
 names(joined_taggs_bystate)
 
 
+#save results for sharing
+write_xlsx(joined_taggs_bystate, "output/joined_taggs_bystate.xlsx")
+
 
