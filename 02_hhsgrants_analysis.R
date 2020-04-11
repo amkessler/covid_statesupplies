@@ -74,14 +74,31 @@ taggs_latest %>%
 
 #first we'll limit to just US states and DC, no territories
 head(fips_codes) #built into tidycensus
-us <- as_tibble(unique(fips_codes$state)[1:51])
+us <- unique(fips_codes$state)[1:51]
+
+taggs_filtered <- taggs_latest %>% 
+  filter(state %in% us)
 
 
+#per guidance from BB health team expert, we'll filter out all NIH grants
+taggs_filtered <- taggs_latest %>% 
+  filter(opdiv != "NIH")
 
+#confirm it's gone
+taggs_filtered %>% 
+  count(opdiv)
+
+# **may be additional categories of grants that also need to be removed... tbd
 
 
 
 ### AGGREGATING BY STATE ####
+
+#now let's aggregate spending by state to work with
+taggs_filtered %>% 
+  group_by(state) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
 
 
 
