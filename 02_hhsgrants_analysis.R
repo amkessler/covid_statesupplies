@@ -18,7 +18,7 @@ taggs_latest_raw <- read_csv("data/taggs_export_latest.csv", col_types = cols(.d
 #clean names and format columns
 # **note: parse_number doesn't handle negative currency well, so because there's at least 
 # one negative dollar amount in the data we'll strip out the dollar sign ($) first
-hhsgrants_latest <- taggs_latest_raw %>% 
+taggs_latest <- taggs_latest_raw %>% 
   clean_names() %>% 
   mutate(
     award_amount = str_remove(award_amount, "\\$"), 
@@ -28,7 +28,65 @@ hhsgrants_latest <- taggs_latest_raw %>%
 
 names(taggs_latest)
 
-#let's use the joined table for ppe above to pull out the already good-to-go state case counts and pops
+
+# quick counts to see what we've got here ####
+
+#how many agencies?
+taggs_latest %>% 
+  group_by(opdiv) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
+#how many programs?
+taggs_latest %>% 
+  group_by(cfda_program_title) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
+#how many award titles?
+taggs_latest %>% 
+  group_by(award_title) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
+#how many recipients?
+taggs_latest %>% 
+  group_by(recipient_name) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars)) 
+
+#how many approp codes?
+taggs_latest %>% 
+  group_by(approp_code) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars)) 
+
+#how many states? (there are territories in here too it looks like)
+taggs_latest %>% 
+  group_by(state) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars)) %>% 
+  View()
+
+
+
+### FILTERING ####
+
+#first we'll limit to just US states and DC, no territories
+head(fips_codes) #built into tidycensus
+us <- as_tibble(unique(fips_codes$state)[1:51])
+
+
+
+
+
+
+### AGGREGATING BY STATE ####
+
+
+
+
+#let's use the ppe table to piggyback off of already good-to-go state case counts and populations
 tempdf <- joined_ppe %>% 
   select(
     name, state_or_local, casecount, censuspop2010, cases_per_100k
