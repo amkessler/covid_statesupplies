@@ -108,6 +108,7 @@ saveRDS(joined_ppe, "data/joined_ppe.rds")
 #############################################################################
 
 # 2) HHS COVID-19 AWARD GRANT DATA ####
+
 # source here: https://taggs.hhs.gov/coronavirus
 
 
@@ -126,3 +127,26 @@ taggs_latest <- taggs_latest_raw %>%
   ) 
 
 names(taggs_latest)
+
+#let's use the joined table for ppe above to pull out the already good-to-go state case counts and pops
+tempdf <- joined_ppe %>% 
+  select(
+    name, state_or_local, casecount, censuspop2010, cases_per_100k
+  )
+
+#since the HHS data has only state abbreviations, not full names, we'll need to add that
+#we'll use tidycensus' built in tables to pull together
+statelist <- tidycensus::fips_codes %>% 
+  select(state, state_name) %>% 
+  distinct() %>% 
+  mutate(state_name = str_to_lower(state_name))
+
+tempdf <- left_join(tempdf, statelist, by = c("name" = "state_name")) 
+
+tempdf
+
+#ok now we're ready to join the temporary table back to our HHS grant data
+
+
+
+
