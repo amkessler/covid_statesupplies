@@ -5,10 +5,6 @@ library(tidycensus)
 library(readxl)
 library(writexl)
 
-#load data from step 00 to use below for pulling certain columns from merged ppe for use here too
-joined_ppe <- readRDS("data/joined_ppe.rds")
-
-
 # HHS COVID-19 AWARD GRANT DATA ####
 # source here: https://taggs.hhs.gov/coronavirus
 
@@ -39,15 +35,15 @@ taggs_latest %>%
 
 #how many programs?
 taggs_latest %>% 
-  group_by(cfda_program_title) %>% 
+  group_by(opdiv, cfda_program_title) %>% 
   summarise(n = n(), total_dollars = sum(award_amount)) %>% 
-  arrange(desc(total_dollars))
+  arrange(desc(total_dollars)) 
 
 #how many award titles?
 taggs_latest %>% 
-  group_by(award_title) %>% 
+  group_by(opdiv, award_title) %>% 
   summarise(n = n(), total_dollars = sum(award_amount)) %>% 
-  arrange(desc(total_dollars))
+  arrange(desc(total_dollars)) 
 
 #how many recipients?
 taggs_latest %>% 
