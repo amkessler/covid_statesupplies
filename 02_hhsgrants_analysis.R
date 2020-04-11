@@ -95,6 +95,7 @@ taggs_filtered %>%
 
 
 
+
 ### AGGREGATING BY STATE ####
 
 #now let's aggregate spending by state to work with
@@ -105,7 +106,8 @@ taggs_bystate <- taggs_filtered %>%
 
 taggs_bystate
 
-#let's use the ppe table to piggyback off of already good-to-go state case counts and populations
+
+#let's use the ppe table to piggyback off of already state virus case counts and populations
 tempdf <- joined_ppe %>% 
   select(
     name, state_or_local, casecount, censuspop2010, cases_per_100k
@@ -124,6 +126,33 @@ tempdf
 
 #ok now we're ready to join the temporary table back to our HHS grant data
 joined_taggs_bystate <- inner_join(tempdf, taggs_bystate, by = "state")
+
+
+# unlike the PPE which was tied to 2010 populations b/c of its role in decisionmaking,
+# this analysis on HHS grants shouldn't be restricted to that?
+# so let's pull more recent state populations from 2018 census ACS 1 year estimates
+census_statepops2018 <- get_acs(geography = "state",
+                            variables = c(totalpop_2018 = "B01003_001"),
+                            survey = "acs1")
+
+#clean names, remove PR and state names to lowercase
+census_statepops2018 <- census_statepops2018 %>% 
+  clean_names() %>% 
+  mutate(name = str_trim(str_to_lower(name))) %>% 
+  filter(name != "puerto rico") %>% 
+  select(geoid, 
+         name, 
+         censuspop2018 = estimate)
+
+census_statepops2018
+
+#bring in file saved in step 00 of coronavirus state-level case counts from terminal
+term_cases <- readRDS("data/term_cases.rds")
+
+
+
+
+#join to 
 
 
 
