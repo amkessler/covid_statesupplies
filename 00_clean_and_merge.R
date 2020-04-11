@@ -106,7 +106,7 @@ saveRDS(joined, "data/joined_ppe.rds")
 
 #############################################################################
 
-# 2) HHS COVID-19 AWARD GRANT DATA
+# 2) HHS COVID-19 AWARD GRANT DATA ####
 # source here: https://taggs.hhs.gov/coronavirus
 
 
@@ -114,14 +114,14 @@ saveRDS(joined, "data/joined_ppe.rds")
 taggs_latest_raw <- read_csv("data/taggs_export_latest.csv", col_types = cols(.default = "c"))
 
 #clean names and format columns
+#note: parse_number doesn't handle negative currency well, so because there's at least 
+# one negative dollar amount in the data we'll strip out the dollar sign ($) first
 taggs_latest <- taggs_latest_raw %>% 
   clean_names() %>% 
   mutate(
-    # award_amount = parse_number(award_amount),
+    award_amount = str_remove(award_amount, "\\$"), 
+    award_amount = parse_number(award_amount),
     action_date = mdy(action_date)
   ) 
 
-
-taggs_latest %>% 
-  filter(recipient_name == "Human Services, Vermont Agency Of")
-
+names(taggs_latest)
