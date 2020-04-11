@@ -22,7 +22,7 @@ taggs_latest <- taggs_latest_raw %>%
     action_date = mdy(action_date)
   ) 
 
-names(taggs_latest)
+glimpse(taggs_latest)
 
 
 # quick counts to see what we've got here ####
@@ -77,17 +77,58 @@ taggs_filtered <- taggs_latest %>%
 taggs_filtered %>% 
   count(state)
 
-#per guidance from BB health team expert, we'll filter out all NIH grants
-taggs_filtered <- taggs_filtered %>% 
-  filter(opdiv != "NIH")
-
-#confirm it's gone
-taggs_filtered %>% 
-  count(opdiv)
+# #per guidance from BB health team expert, we'll filter out all NIH grants
+# taggs_filtered <- taggs_filtered %>% 
+#   filter(opdiv != "NIH")
+# 
+# #confirm it's gone
+# taggs_filtered %>% 
+#   count(opdiv)
 
 # **may be additional categories of grants that also need to be removed... tbd
 
+#let's take a look at the particulars of certainly categories of grants
+
+#NIH
+taggs_filtered %>% 
+  filter(opdiv == "NIH") %>% 
+  group_by(cfda_program_title, award_title) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
+
+taggs_filtered %>% 
+  filter(cfda_program_title == "Allergy and Infectious Diseases Research") %>% 
+  group_by(cfda_program_title, award_title) %>% 
+  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
+taggs_filtered
+
+#let's look at breakdowns of all non-HRSA programs
+all_nonHRSA_sums <- taggs_filtered %>% 
+  filter(opdiv != "HRSA") %>% 
+  group_by(cfda_program_title, opdiv, award_title, recipient_name) %>% 
+  summarise(total_dollars = sum(award_amount)) %>% 
+  arrange(cfda_program_title, desc(total_dollars)) 
+
+all_nonHRSA_sums
+
+#export
+write_xlsx(all_nonHRSA_sums, "output/all_nonHRSA_sums.xlsx")
+
+
 # **also does DC itself need to be removed? Are there grants tagged as DC that have nothing to do with funding *for* DC residents?
+# Let's see what's up with DC
+taggs_filtered %>% 
+  filter(state == "DC") %>% 
+  View()
+
+#there appear to be a couple of national Native American-centered orgs in DC
+taggs_filtered %>% 
+  filter(recipient_name %in% c("NATIONAL COUNCIL OF URBAN INDIAN HEALTH",
+                               "NATIONAL INDIAN HEALTH BOARD, INC"))
+
 
 
 
