@@ -106,34 +106,12 @@ taggs_bystate <- taggs_filtered %>%
 
 taggs_bystate
 
-
-#let's use the ppe table to piggyback off of already state virus case counts and populations
-tempdf <- joined_ppe %>% 
-  select(
-    name, state_or_local, casecount, censuspop2010, cases_per_100k
-  )
-
-#since the HHS data has only state abbreviations, not full names, we'll need to add that
-#we'll use tidycensus' built in fips table once again 
-statelist <- tidycensus::fips_codes %>% 
-  select(state, state_name) %>% 
-  distinct() %>% 
-  mutate(state_name = str_to_lower(state_name))
-
-tempdf <- left_join(tempdf, statelist, by = c("name" = "state_name")) 
-
-tempdf
-
-#ok now we're ready to join the temporary table back to our HHS grant data
-joined_taggs_bystate <- inner_join(tempdf, taggs_bystate, by = "state")
-
-
 # unlike the PPE which was tied to 2010 populations b/c of its role in decisionmaking,
 # this analysis on HHS grants shouldn't be restricted to that?
-# so let's pull more recent state populations from 2018 census ACS 1 year estimates
-census_statepops2018 <- get_acs(geography = "state",
-                            variables = c(totalpop_2018 = "B01003_001"),
-                            survey = "acs1")
+# so let's pull more recent state populations from **2018 census** ACS 1 year estimates
+census_statepops2018 <- tidycensus::get_acs(geography = "state",
+                                variables = c(totalpop_2018 = "B01003_001"),
+                                survey = "acs1")
 
 #clean names, remove PR and state names to lowercase
 census_statepops2018 <- census_statepops2018 %>% 
@@ -146,10 +124,42 @@ census_statepops2018 <- census_statepops2018 %>%
 
 census_statepops2018
 
-#bring in file saved in step 00 of coronavirus state-level case counts from terminal
+#since the HHS data has only state abbreviations, not full names, we'll need to add that
+#we'll use tidycensus' built in fips table once again 
+statelist <- tidycensus::fips_codes %>% 
+  select(state, state_name) %>% 
+  distinct() %>% 
+  mutate(state_name = str_to_lower(state_name))
+
+taggs_bystate <- inner_join(statelist, taggs_bystate, by = "state")
+
+#ok now we're ready to join back to our HHS grant data
+joined_taggs_bystate <- inner_join(taggs_bystate, census_statepops2018, by = c("state_name" = "name")) %>% 
+  select(geoid, everything())
+
+
+#with population done, let's now bring in the case counts 
+#we'll use the file saved in step 00 of coronavirus state-level case counts from terminal
 term_cases <- readRDS("data/term_cases.rds")
 
+#join it to the main table
+joined_taggs_bystate <- inner_join(joined_taggs_bystate, term_cases, by = c("state_name" = "name"))
 
+
+
+#now we'll use the new case count column to calculate per capita based on population
+joined_ppe <- joined_ppe %>% 
+  mutate(
+    cases_per_100k = round_half_up(casecount / censuspop2010 * 100000)
+  ) 
+
+
+
+#let's use the ppe table to piggyback off of already state virus case counts and populations
+tempdf <- joined_ppe %>% 
+  select(
+    name, state_or_local, casecount, censuspop2010, cases_per_100k
+  )
 
 
 #join to 

@@ -34,19 +34,19 @@ ppe <- ppe %>%
 
 
 #import terminal case counts and pare down columns
-terminal_casecounts_apr10 <- read_excel("data/terminal_casecounts_apr10.xlsx", 
+terminal_casecounts <- read_excel("data/terminal_casecounts_apr10.xlsx", 
                                         sheet = "cases")
 
-terminal_casecounts_apr10 <- terminal_casecounts_apr10 %>% 
+terminal_casecounts <- terminal_casecounts %>% 
   clean_names() %>% 
   mutate(region_2 = str_trim(str_to_lower(region_2)))
 
-names(terminal_casecounts_apr10)
+names(terminal_casecounts)
 
-term_cases <- terminal_casecounts_apr10 %>% 
+term_cases <- terminal_casecounts %>% 
   select(
     name = region_2,
-    term_case_count_apr10 = latest
+    term_case_counts = latest
   )
 
 #save as RDS for later use
@@ -57,7 +57,7 @@ joined_ppe <- left_join(ppe, term_cases)
 
 #see what didn't join
 joined_ppe %>% 
-  filter(is.na(term_case_count_apr10))
+  filter(is.na(term_case_counts))
 
 #the local jurisdictions hand-gathered by staff need to be incorporated
 
@@ -69,7 +69,7 @@ joined_ppe <- joined_ppe %>%
 #the new column will be the one we use from here on out
 joined_ppe <- joined_ppe %>% 
   mutate(
-    casecount = if_else(state_or_local == "state", term_case_count_apr10, cases_cdc_apr9)
+    casecount = if_else(state_or_local == "state", term_case_counts, cases_cdc_apr9)
   ) 
 
 #now we'll use the new case count column to calculate per capita based on population
@@ -88,7 +88,7 @@ joined_ppe <- joined_ppe %>%
     cases_per_100k,
     everything(),
     -cases_cdc_apr9,
-    -term_case_count_apr10
+    -term_case_counts
   ) 
 
 head(joined_ppe)
