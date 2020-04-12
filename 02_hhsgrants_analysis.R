@@ -126,10 +126,20 @@ taggs_filtered %>%
 
 #there appear to be a couple of national Native American-centered orgs in DC
 taggs_filtered %>% 
-  filter(recipient_name %in% c("NATIONAL COUNCIL OF URBAN INDIAN HEALTH",
-                               "NATIONAL INDIAN HEALTH BOARD, INC"))
+  filter(state == "DC",
+    str_detect(recipient_name, "INDIAN"))
 
-
+#let's see what those groups' make up as percentage of money tied to DC
+taggs_filtered %>% 
+  filter(state == "DC") %>% 
+  mutate(
+    natlnativeamer = if_else(str_detect(recipient_name, "INDIAN"), "Y", "N")
+      ) %>% 
+  group_by(natlnativeamer) %>% 
+  summarise(sumtotal = sum(award_amount)) %>% 
+  mutate(pct = sumtotal / sum(sumtotal) * 100)
+         
+#So it makes up nearly 40 percent of DC's money. This probably needs to be dealt with to avoid throwing off analysis.
 
 
 
