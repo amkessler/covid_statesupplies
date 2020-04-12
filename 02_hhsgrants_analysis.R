@@ -142,6 +142,13 @@ taggs_filtered %>%
 #So it makes up nearly 40 percent of DC's money. This probably needs to be dealt with to avoid throwing off analysis.
 
 
+#What about anything with "national" in the name anywhere...
+taggs_filtered %>%
+  filter(str_detect(str_to_upper(recipient_name), "NATIONAL")) %>% 
+  select(recipient_name, city)
+
+
+
 
 ### AGGREGATING BY STATE ####
 
