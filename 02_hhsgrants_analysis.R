@@ -115,7 +115,7 @@ all_nonHRSA_sums <- taggs_filtered %>%
 all_nonHRSA_sums
 
 #export
-write_xlsx(all_nonHRSA_sums, "output/all_nonHRSA_sums.xlsx")
+write_csv(all_nonHRSA_sums, "output/all_nonHRSA_sums.csv")
 
 
 # **also does DC itself need to be removed? Are there grants tagged as DC that have nothing to do with funding *for* DC residents?
