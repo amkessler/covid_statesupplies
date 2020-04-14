@@ -176,6 +176,14 @@ taggs_filtered %>%
   summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
 
+#how many award titles?
+taggs_filtered %>% 
+  group_by(opdiv, award_title) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars)) 
+
+
+
 
 
 #### ALASKA ANALYSIS #### --------------------------------------------------------------------
@@ -228,8 +236,7 @@ nativeprogramsonly %>%
   group_by(state) %>% 
   summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   mutate(pct = total_dollars / sum(total_dollars) * 100) %>% 
-  arrange(desc(total_dollars)) %>% 
-  View()
+  arrange(desc(total_dollars)) 
 #Alaska #2, Okla. #1 - virtually tied for first. Twice as much as the next states down, CA, NM, WI, MT
 
 #What about separately?
@@ -250,6 +257,7 @@ alaskaonly %>%
 
 
 ### AGGREGATING BY STATE #### ----------------------------------------------------------------
+
 
 #now let's aggregate spending by state to work with
 taggs_bystate <- taggs_filtered %>% 
