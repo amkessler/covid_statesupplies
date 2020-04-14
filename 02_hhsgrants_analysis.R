@@ -170,13 +170,48 @@ taggs_filtered <- taggs_filtered %>%
 
 
 
-### AGGREGATING BY STATE #### ----------------------------------------------------------------
-
-#how many approp codes?
+#how much money per approp code now in the filtered data?
 taggs_filtered %>% 
   group_by(approp_code) %>% 
   summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
+
+
+
+#### ALASKA ANALYSIS #### --------------------------------------------------------------------
+
+#let's explore what's up with Alaska's money, since as we'll see below it has a very high proportion of funding
+#despite its low number of cases and small population
+alaskaonly <- taggs_filtered %>% 
+  filter(state == "AK")
+
+
+#let's see which programs generating the most for alaska
+alaskaonly %>% 
+  group_by(cfda_program_title) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  mutate(pct = total_dollars / sum(total_dollars) * 100) %>% 
+  arrange(desc(total_dollars)) 
+
+#now by award title
+alaskaonly %>% 
+  group_by(award_title) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  mutate(pct = total_dollars / sum(total_dollars) * 100) %>% 
+  arrange(desc(total_dollars)) 
+
+#by recipient
+alaskaonly %>% 
+  group_by(recipient_name) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  mutate(pct = total_dollars / sum(total_dollars) * 100) %>% 
+  arrange(desc(total_dollars)) 
+
+
+
+
+
+### AGGREGATING BY STATE #### ----------------------------------------------------------------
 
 #now let's aggregate spending by state to work with
 taggs_bystate <- taggs_filtered %>% 
