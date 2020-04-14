@@ -17,7 +17,7 @@ names(ppe)
 
 
 #import terminal case counts and pare down columns
-terminal_casecounts <- read_excel("data/terminal_casecounts_apr10.xlsx", 
+terminal_casecounts <- read_excel("data/terminal_casecounts_apr13.xlsx", 
                                         sheet = "cases")
 
 terminal_casecounts <- terminal_casecounts %>% 

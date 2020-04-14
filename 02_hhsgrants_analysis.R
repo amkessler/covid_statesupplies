@@ -4,6 +4,11 @@ library(lubridate)
 library(tidycensus)
 library(readxl)
 library(writexl)
+library(sf)
+library(spData)
+library(tigris)
+library(tmap)
+library(tmaptools)
 
 # HHS COVID-19 AWARD GRANT DATA ####
 # source here: https://taggs.hhs.gov/coronavirus
@@ -30,37 +35,37 @@ glimpse(taggs_latest)
 #how many agencies?
 taggs_latest %>% 
   group_by(opdiv) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars))
 
 #how many programs?
 taggs_latest %>% 
   group_by(opdiv, cfda_program_title) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
 
 #how many award titles?
 taggs_latest %>% 
   group_by(opdiv, award_title) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
 
 #how many recipients?
 taggs_latest %>% 
   group_by(recipient_name) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
 
 #how many approp codes?
 taggs_latest %>% 
   group_by(approp_code) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
 
 #how many states? (there are territories in here too it looks like)
 taggs_latest %>% 
   group_by(state) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars)) 
 
 
@@ -77,13 +82,13 @@ taggs_filtered <- taggs_latest %>%
 taggs_filtered %>% 
   count(state)
 
-# #per guidance from BB health team expert, we'll filter out all NIH grants
-# taggs_filtered <- taggs_filtered %>% 
-#   filter(opdiv != "NIH")
-# 
-# #confirm it's gone
-# taggs_filtered %>% 
-#   count(opdiv)
+#per guidance from BB health team expert, we'll filter out all NIH grants
+taggs_filtered <- taggs_filtered %>%
+  filter(opdiv != "NIH")
+
+#confirm it's gone
+taggs_filtered %>%
+  count(opdiv)
 
 # **may be additional categories of grants that also need to be removed... tbd
 
@@ -93,14 +98,14 @@ taggs_filtered %>%
 taggs_filtered %>% 
   filter(opdiv == "NIH") %>% 
   group_by(cfda_program_title, award_title) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars))
 
 
 taggs_filtered %>% 
   filter(cfda_program_title == "Allergy and Infectious Diseases Research") %>% 
   group_by(cfda_program_title, award_title) %>% 
-  summarise(n = n(), total_dollars = sum(award_amount)) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
   arrange(desc(total_dollars))
 
 taggs_filtered
@@ -115,19 +120,28 @@ all_nonHRSA_sums <- taggs_filtered %>%
 all_nonHRSA_sums
 
 #export
-write_csv(all_nonHRSA_sums, "output/all_nonHRSA_sums.csv")
+# write_csv(all_nonHRSA_sums, "output/all_nonHRSA_sums.csv")
+
+#What about anything else with "national" in the name anywhere...
+taggs_filtered %>%
+  filter(str_detect(str_to_upper(recipient_name), "NATIONAL")) %>% 
+  select(award_title, recipient_name, city)
+
+taggs_filtered %>%
+  filter(str_detect(str_to_upper(award_title), "NATIONAL")) %>% 
+  select(award_title, recipient_name, city)
 
 
 # **also does DC itself need to be removed? Are there grants tagged as DC that have nothing to do with funding *for* DC residents?
 # Let's see what's up with DC
 taggs_filtered %>% 
-  filter(state == "DC") %>% 
-  View()
+  filter(state == "DC") 
 
 #there appear to be a couple of national Native American-centered orgs in DC
 taggs_filtered %>% 
   filter(state == "DC",
-    str_detect(recipient_name, "INDIAN"))
+    str_detect(recipient_name, "INDIAN")) %>% 
+  select(recipient_name, award_amount)
 
 #let's see what those groups' make up as percentage of money tied to DC
 taggs_filtered %>% 
@@ -141,16 +155,23 @@ taggs_filtered %>%
          
 #So it makes up nearly 40 percent of DC's money. This probably needs to be dealt with to avoid throwing off analysis.
 
+#Per the guidance as of 5p on Mon, we'releaving DC as a jurisdiction but taking OUT the two national native organizations 
+#from DC's pot of money, so they are not skewing things. We'll explain why this was done in the piece.
+taggs_filtered <- taggs_filtered %>% 
+  filter(recipient_name != "NATIONAL INDIAN HEALTH BOARD, INC")
 
-#What about anything with "national" in the name anywhere...
-taggs_filtered %>%
-  filter(str_detect(str_to_upper(recipient_name), "NATIONAL")) %>% 
-  select(recipient_name, city)
+taggs_filtered <- taggs_filtered %>% 
+  filter(recipient_name != "NATIONAL COUNCIL OF URBAN INDIAN HEALTH")
+
+
+#we'll take out the Ebola Training Ctr in Atlanta for similar reasons
+taggs_filtered <- taggs_filtered %>% 
+  filter(award_title != "National Ebola Training and Education Center") 
 
 
 
 
-### AGGREGATING BY STATE ####
+### AGGREGATING BY STATE #### ----------------------------------------------------------------
 
 #now let's aggregate spending by state to work with
 taggs_bystate <- taggs_filtered %>% 
@@ -162,7 +183,7 @@ taggs_bystate
 
 # unlike the PPE which was tied to 2010 populations b/c of its role in decisionmaking,
 # this analysis on HHS grants shouldn't be restricted to that?
-# so let's pull more recent state populations from **2018 census** ACS 1 year estimates
+# so let's pull more recent state populations from **2018 census** ACS 1 year estimates ####
 census_statepops2018 <- tidycensus::get_acs(geography = "state",
                                 variables = c(totalpop_2018 = "B01003_001"),
                                 survey = "acs1")
@@ -192,8 +213,9 @@ joined_taggs_bystate <- inner_join(taggs_bystate, census_statepops2018, by = c("
   select(geoid, everything())
 
 
+
 #with population done, let's now bring in the case counts 
-#we'll use the file saved in step 00 of coronavirus state-level case counts from terminal
+#we'll use the file saved in step 00 of coronavirus state-level case counts from terminal ####
 term_cases <- readRDS("data/term_cases.rds")
 
 #join it to the main table
@@ -213,25 +235,85 @@ joined_taggs_bystate <- joined_taggs_bystate %>%
 #add calculated fields and ranks
 joined_taggs_bystate <- joined_taggs_bystate %>% 
   mutate(
-    #by population per capita
+    #dollars per person / per capita
     dollars_percapita = total_dollars / censuspop2018,
     dollars_percapita_rank = min_rank(desc(dollars_percapita)),
+    #dollars per case
     dollars_percase = total_dollars / casecount,
     dollars_percase_rank = min_rank(desc(dollars_percase)),
-    dollars_per_casesper100kppl = total_dollars / cases_per_100k,
-    dollars_per_casesper100kppl_rank = min_rank(desc(dollars_per_casesper100kppl))
   ) 
 
-#add a ranking too for the cases/per100k itself 
+#add a ranking for population and straight case count
 joined_taggs_bystate <- joined_taggs_bystate %>% 
   mutate(
-    cases_per_100k_rank = min_rank(desc(cases_per_100k))
+    # cases_per_100k_rank = min_rank(desc(cases_per_100k)),  #this measure was used earlier, here removed
+    casecount_rank = min_rank(desc(casecount)),
+    pop_rank = min_rank(desc(censuspop2018))
   )
 
 names(joined_taggs_bystate)
+
+
+#now, let's create a calculated column that shows the spread between the rankings, so we can spot the largest differences
+joined_taggs_bystate <- joined_taggs_bystate %>% 
+  mutate(
+    rankspread_population_dollarsperpop = abs(pop_rank - dollars_percapita_rank),
+    rankspread_casecount_dollarspercase = abs(casecount_rank - dollars_percase_rank),
+  )
+
+
+names(joined_taggs_bystate)
+
+
+#reorder columns to make it easier to read
+joined_taggs_bystate <- joined_taggs_bystate %>%
+  select(geoid,
+      state_name,
+      total_dollars,
+      casecount,
+      dollars_percase,
+      censuspop2018,
+      dollars_percapita,
+      casecount_rank,
+      dollars_percase_rank,
+      rankspread_casecount_dollarspercase,
+      pop_rank,
+      dollars_percapita_rank,
+      rankspread_population_dollarsperpop,
+)
 
 
 #save results for sharing
 write_xlsx(joined_taggs_bystate, "output/joined_taggs_bystate.xlsx")
 
 
+
+
+
+### MAPPING #### --------------------------------------------------------
+
+#pull down state boundaries - run once then can use saved file below
+# states_geo <- states(class = "sf", cb = TRUE)
+# saveRDS(states_geo, "data/states_geo.rds")
+
+#load saved state boundary file
+states_geo <- readRDS("data/states_geo.rds")
+
+#lower 48 only + DC
+states_geo_lower48 <- states_geo %>% 
+  filter(STUSPS %in% us,
+         STUSPS != "AK",
+         STUSPS != "HI"
+         )
+
+#join to taggs_by_state
+joined_taggs_bystate_geo_lower48 <- geo_join(states_geo_lower48, joined_taggs_bystate, "STATEFP", "geoid")
+
+#mapping out the states based on dollars-per-case
+map_dollarspercase_lower48 <- tm_shape(joined_taggs_bystate_geo_lower48) +
+    tm_polygons("dollars_percase") 
+
+map_dollarspercase_lower48
+
+#export to pdf
+tmap_save(map_dollarspercase_lower48, "output/map_dollarspercase_lower48.pdf")
