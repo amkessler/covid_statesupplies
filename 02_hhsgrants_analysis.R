@@ -172,6 +172,12 @@ taggs_filtered <- taggs_filtered %>%
 
 ### AGGREGATING BY STATE #### ----------------------------------------------------------------
 
+#how many approp codes?
+taggs_filtered %>% 
+  group_by(approp_code) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars)) 
+
 #now let's aggregate spending by state to work with
 taggs_bystate <- taggs_filtered %>% 
   group_by(state) %>% 
