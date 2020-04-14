@@ -208,6 +208,44 @@ alaskaonly %>%
   arrange(desc(total_dollars)) 
 
 
+### now let's look at the overall native american-oriented funding mechanisms and how much Alaska gets 
+
+# programs
+taggs_filtered %>% 
+  group_by(cfda_program_title) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
+# there appear to be two programs exclusively aimed at native communities
+# let's isolate them here to examine
+nativeprogramsonly <- taggs_filtered %>% 
+  filter(cfda_program_title %in% c("Tribal Public Health Capacity Building and Quality Improvement Umbrella Cooperative Agreement",
+                                   "Special Programs for the Aging, Title VI, Part A, Grants to Indian Tribes, Part B, Grants to Native Hawaiians"))
+
+
+# what states are getting the most from these programs combined
+nativeprogramsonly %>% 
+  group_by(state) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  mutate(pct = total_dollars / sum(total_dollars) * 100) %>% 
+  arrange(desc(total_dollars)) %>% 
+  View()
+#Alaska #2, Okla. #1 - virtually tied for first. Twice as much as the next states down, CA, NM, WI, MT
+
+#What about separately?
+nativeprogramsonly %>% 
+  group_by(cfda_program_title, state) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+#Looks like Alaska #1` for Special Programs for Aging Tribal Grants, #2 for Tribal Public Health Policy grants
+
+
+#award titles
+alaskaonly %>% 
+  group_by(cfda_program_title, award_title) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
+
 
 
 
