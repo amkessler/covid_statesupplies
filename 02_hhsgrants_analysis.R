@@ -180,9 +180,12 @@ taggs_filtered %>%
 taggs_filtered %>% 
   group_by(opdiv, award_title) %>% 
   summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
-  arrange(desc(total_dollars)) 
+  arrange(desc(total_dollars))
 
-
+taggs_filtered %>% 
+  group_by(award_title) %>% 
+  summarise(num_records = n(), total_dollars = sum(award_amount)) %>% 
+  arrange(desc(total_dollars))
 
 
 
