@@ -308,7 +308,7 @@ joined_taggs_bystate <- inner_join(taggs_bystate, census_statepops2018, by = c("
 term_cases <- readRDS("data/term_cases.rds")
 
 #join it to the main table
-joined_taggs_bystate <- inner_join(joined_taggs_bystate, term_cases, by = c("state_name" = "name"))
+joined_taggs_bystate <- inner_join(joined_taggs_bystate, term_cases, by = "state_name")
 
 #now we'll calculate cases per 100k based on population
 joined_taggs_bystate <- joined_taggs_bystate %>% 
